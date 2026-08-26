@@ -1,0 +1,81 @@
+.streak-heatmap-container {
+  margin: 1em 0;
+  /* A full year is ~53 columns wide; this keeps it from breaking the note's
+     layout on narrow windows or mobile, letting it scroll horizontally instead. */
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.streak-heatmap-years {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.streak-heatmap-year-btn {
+  cursor: pointer;
+  padding: 4px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--background-modifier-border);
+  background: var(--background-secondary);
+  color: var(--text-normal);
+}
+
+.streak-heatmap-year-btn.is-active {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+  border-color: var(--interactive-accent);
+}
+
+.streak-heatmap-year-btn:focus-visible,
+.streak-heatmap-cell:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 1px;
+}
+
+.streak-heatmap-months {
+  font-size: 0.75em;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+
+.streak-heatmap-month-label {
+  white-space: nowrap;
+}
+
+.streak-heatmap-daylabels {
+  margin-right: 4px;
+}
+
+.streak-heatmap-day-label {
+  font-size: 0.75em;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+}
+
+.streak-heatmap-cell {
+  cursor: pointer;
+  background-color: var(--background-modifier-border);
+}
+
+.streak-heatmap-cell.is-marked {
+  background-color: #39d353;
+}
+
+.streak-heatmap-cell.is-future {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.streak-heatmap-cell:not(.is-future):hover {
+  outline: 1px solid var(--text-normal);
+}
+
+.streak-heatmap-btnrow {
+  margin-top: 8px;
+}
+
+.streak-heatmap-btnrow button {
+  cursor: pointer;
+}
