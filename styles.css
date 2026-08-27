@@ -4,6 +4,16 @@
      layout on narrow windows or mobile, letting it scroll horizontally instead. */
   overflow-x: auto;
   max-width: 100%;
+  touch-action: manipulation;
+}
+
+.streak-heatmap-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.streak-heatmap-container::-webkit-scrollbar-thumb {
+  background: var(--background-modifier-border);
+  border-radius: 3px;
 }
 
 .streak-heatmap-years {
@@ -19,6 +29,7 @@
   border: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
   color: var(--text-normal);
+  touch-action: manipulation;
 }
 
 .streak-heatmap-year-btn.is-active {
@@ -57,6 +68,7 @@
 .streak-heatmap-cell {
   cursor: pointer;
   background-color: var(--background-modifier-border);
+  touch-action: manipulation;
 }
 
 .streak-heatmap-cell.is-marked {
@@ -78,4 +90,25 @@
 
 .streak-heatmap-btnrow button {
   cursor: pointer;
+}
+
+.streak-heatmap-stats {
+  margin-bottom: 8px;
+  color: var(--text-muted);
+  font-size: 0.85em;
+}
+
+.streak-heatmap-stats-track {
+  height: 6px;
+  margin-bottom: 5px;
+  overflow: hidden;
+  background: var(--background-modifier-border);
+  border-radius: 3px;
+}
+
+.streak-heatmap-stats-fill {
+  height: 100%;
+  width: 0;
+  background: #39d353;
+  transition: width 180ms ease;
 }

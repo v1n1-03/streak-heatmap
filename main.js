@@ -1,7 +1,5 @@
 const { Plugin } = require('obsidian');
 
-const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const DAY_LABELS = { 1: 'Mon', 3: 'Wed', 5: 'Fri' }; // grid rows are Sun(0)..Sat(6); only every other row is labeled to save space
 const MAX_PAST_YEARS = 6; // cap on how many past-year buttons can appear, so the row doesn't grow unbounded
 
 module.exports = class StreakHeatmapPlugin extends Plugin {
@@ -29,6 +27,67 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
       }
     });
     return params;
+  }
+
+  normalizeColor(value) {
+    if (!value) return null;
+    const color = value.trim().startsWith('--') ? `var(${value.trim()})` : value.trim();
+    if (typeof CSS !== 'undefined' && CSS.supports && !CSS.supports('background-color', color)) return null;
+
+    const probe = document.createElement('span');
+    probe.style.backgroundColor = color;
+    if (!probe.style.backgroundColor) return null;
+    document.body.appendChild(probe);
+    const computedColor = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    if (color.includes('var(') && /^(transparent|rgba?\(0, 0, 0, 0\))$/i.test(computedColor)) return null;
+    return computedColor ? color : null;
+  }
+
+  getStats(trackerData, year) {
+    const daysInYear = new Date(year, 1, 29).getDate() === 29 ? 366 : 365;
+    let total = 0;
+    let maxStreak = 0;
+    let currentStreak = 0;
+    const start = new Date(year, 0, 1);
+    const end = new Date(year, 11, 31);
+
+    for (const cursor = new Date(start); cursor <= end; cursor.setDate(cursor.getDate() + 1)) {
+      if (trackerData[this.dateStr(cursor)]) {
+        total += 1;
+        currentStreak += 1;
+        maxStreak = Math.max(maxStreak, currentStreak);
+      } else {
+        currentStreak = 0;
+      }
+    }
+
+    return { total, percentage: Math.round((total / daysInYear) * 1000) / 10, maxStreak };
+  }
+
+  formatDate(ds) {
+    const locale = window.moment().locale();
+    return window.moment(ds, 'YYYY-MM-DD').locale(locale).format('dddd, LL');
+  }
+
+  renderStats(gridArea, trackerData, year, stats, color) {
+    if (stats === 'none') return null;
+
+    const statsEl = gridArea.createDiv({ cls: `streak-heatmap-stats is-${stats}` });
+    let fill;
+    if (stats === 'bar') {
+      const track = statsEl.createDiv({ cls: 'streak-heatmap-stats-track' });
+      fill = track.createDiv({ cls: 'streak-heatmap-stats-fill' });
+      if (color) fill.style.backgroundColor = color;
+    }
+    const summary = statsEl.createDiv({ cls: 'streak-heatmap-stats-summary' });
+    const update = () => {
+      const values = this.getStats(trackerData, year);
+      summary.setText(`${values.total} days | ${values.percentage}% of year | max streak: ${values.maxStreak} days`);
+      if (fill) fill.style.width = `${Math.min(100, values.percentage)}%`;
+    };
+    update();
+    return update;
   }
 
   // Formats a date as YYYY-MM-DD from its LOCAL components. Deliberately
@@ -65,10 +124,15 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
     return weeks;
   }
 
-  renderGrid(gridArea, trackerData, year, today, dims) {
+  renderGrid(gridArea, trackerData, year, today, dims, stats, color) {
     const { CELL, GAP, COL } = dims;
     const todayStr = this.dateStr(today);
     const weeks = this.buildWeeks(year);
+    const statsUpdate = this.renderStats(gridArea, trackerData, year, stats, color);
+    const locale = window.moment().locale();
+    const localeData = window.moment.localeData(locale);
+    const months = localeData.monthsShort();
+    const weekdays = localeData.weekdaysShort();
 
     const monthRow = gridArea.createDiv({ cls: 'streak-heatmap-months' });
     monthRow.style.display = 'grid';
@@ -79,7 +143,7 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
       // Only a "day 1" that belongs to the displayed year counts here, so
       // filler days at the grid's edges don't get mislabeled with the wrong month.
       const firstOfMonth = week.find((d) => d.getDate() === 1 && d.getFullYear() === year);
-      cell.setText(firstOfMonth ? MONTH_NAMES[firstOfMonth.getMonth()] : '');
+      cell.setText(firstOfMonth ? months[firstOfMonth.getMonth()] : '');
     });
 
     const body = gridArea.createDiv({ cls: 'streak-heatmap-body' });
@@ -90,7 +154,7 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
     dayLabelsCol.style.gridTemplateRows = `repeat(7, ${COL}px)`;
     dayLabelsCol.style.width = `${COL}px`;
     for (let row = 0; row < 7; row++) {
-      dayLabelsCol.createDiv({ cls: 'streak-heatmap-day-label' }).setText(DAY_LABELS[row] || '');
+      dayLabelsCol.createDiv({ cls: 'streak-heatmap-day-label' }).setText([1, 3, 5].includes(row) ? weekdays[row] : '');
     }
 
     const grid = body.createDiv({ cls: 'streak-heatmap-grid' });
@@ -123,6 +187,7 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
         trackerData[ds] = true;
       }
       notifyDateChange(ds);
+      if (statsUpdate) statsUpdate();
       try {
         await this.saveData(this.data);
       } catch (e) {
@@ -152,6 +217,7 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
         cell.style.height = `${CELL}px`;
         cell.style.borderRadius = '3px';
         cell.classList.toggle('is-marked', marked);
+        if (color && marked) cell.style.backgroundColor = color;
 
         if (isFuture) {
           // Future day: shown faded and non-interactive, since a streak
@@ -161,14 +227,16 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
         }
 
         cellByDate[ds] = cell;
-        cell.setAttr('title', ds);
+        const formattedDate = this.formatDate(ds);
+        cell.setAttr('title', formattedDate);
         cell.setAttr('role', 'button');
         cell.setAttr('tabindex', '0');
-        cell.setAttr('aria-label', ds);
+        cell.setAttr('aria-label', formattedDate);
         cell.setAttr('aria-pressed', String(marked));
 
         onDateChange(ds, (isMarked) => {
           cell.classList.toggle('is-marked', isMarked);
+          if (color) cell.style.backgroundColor = isMarked ? color : '';
           cell.setAttr('aria-pressed', String(isMarked));
         });
 
@@ -198,6 +266,8 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
   renderHeatmap(source, el) {
     const params = this.parseParams(source);
     const title = params.title; // optional board name; also used as the storage key
+    const stats = ['bar', 'text'].includes(params.stats) ? params.stats : 'none';
+    const color = this.normalizeColor(params.color);
 
     const key = title ? title.toLowerCase().replace(/\s+/g, '-') : 'default';
     if (!this.data[key]) this.data[key] = {};
@@ -230,7 +300,7 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
 
     const draw = () => {
       gridArea.empty();
-      this.renderGrid(gridArea, trackerData, selectedYear, today, dims);
+      this.renderGrid(gridArea, trackerData, selectedYear, today, dims, stats, color);
       buttons.forEach(({ btn, year }) => {
         const active = year === selectedYear;
         btn.classList.toggle('is-active', active);
