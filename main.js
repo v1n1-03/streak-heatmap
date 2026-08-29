@@ -57,18 +57,13 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
     this.registerDomEvent(document, 'keydown', (event) => {
       if (event.key !== 'Escape' || !this.activePopup) return;
       const triggerCell = this.activePopup.triggerCell;
-      const contextId = this.activePopup.contextId;
       this.closePopup();
       if (triggerCell && triggerCell.isConnected) triggerCell.focus();
-      if (this.heatmapContexts.has(contextId) && !this.heatmapContexts.get(contextId).el.isConnected) {
-        this.heatmapContexts.delete(contextId);
-      }
     });
 
     this.registerEvent(this.app.workspace.on('layout-change', () => {
-      this.heatmapContexts.forEach((context, id) => {
+      this.heatmapContexts.forEach((context) => {
         if (context.el.isConnected) context.draw();
-        else this.heatmapContexts.delete(id);
       });
     }));
 
@@ -76,9 +71,8 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
       clearTimeout(this._resizeTimer);
       this._resizeTimer = setTimeout(() => {
         this._resizeTimer = null;
-        this.heatmapContexts.forEach((context, id) => {
+        this.heatmapContexts.forEach((context) => {
           if (context.el.isConnected) context.draw();
-          else this.heatmapContexts.delete(id);
         });
       }, 150);
     });
@@ -309,10 +303,8 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
   }
 
   refreshContextsForKey(key, excludeId) {
-    this.heatmapContexts.forEach((context, id) => {
-      if (!context.el.isConnected) {
-        this.heatmapContexts.delete(id);
-      } else if (context.key === key && context.id !== excludeId) {
+    this.heatmapContexts.forEach((context) => {
+      if (context.key === key && context.id !== excludeId) {
         context.draw();
       }
     });
@@ -320,7 +312,7 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
 
   hasDetailedContextForPath(path) {
     return [...this.heatmapContexts.values()].some((context) => (
-      context.mode === 'detailed' && context.path === path && context.el.isConnected
+      context.mode === 'detailed' && context.path === path
     ));
   }
 
@@ -371,7 +363,6 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
       context && context.mode === 'detailed'
       && context.path === file.path
       && context.title
-      && context.el && context.el.isConnected
     ));
     if (!contexts.length) {
       this.fileCaches.delete(file.path);
@@ -436,8 +427,6 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
             return `${line} ✅ ${today}`;
           }
 
-          // Unchecked task still carrying a badge from before: strip it so the task is
-          // completable again. The point already awarded for that day is left untouched.
           const uncheckedTitle = this.taskContent(line, false);
           if (uncheckedTitle && anyBadgeRegex.test(line)) {
             changed = true;
@@ -1205,4 +1194,3 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
     draw();
   }
 };
-/* nosourcemap */
