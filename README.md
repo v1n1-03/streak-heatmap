@@ -56,9 +56,11 @@ Detailed mode is for tracking specific numerical values (like pages read, miles 
   - *Mobile:* **Long-press** the cell.
 
 **Automated Task Processing (Detailed Mode Only):**
-If you have an unchecked markdown task in the *same note* that contains the board's title, completing it will automatically add +1 point to today's streak. The plugin will append a date badge to prevent double-counting.
+If you have an unchecked markdown task in the *same note* that contains the board's title, completing it will automatically add +1 point to today's streak. The plugin appends a date badge to prevent double-counting.
 *   *Before:* `- [ ] Pages Read: chapter 4`
 *   *After clicking the checkbox:* `- [x] Pages Read: chapter 4 ✅ 2026-08-29`
+
+Unchecking the task again removes the badge, so it becomes completable once more. The point already logged for that day is kept — unchecking just resets the task, it doesn't undo your streak.
 
 ---
 
@@ -90,7 +92,7 @@ Use the `stats:` parameter to show your progress below the calendar.
 - **100% Local Storage:** Your history is saved entirely offline inside a `data.json` file in the plugin's folder. Data is completely private and migrates automatically if you previously used version 1.1.
 - **Native Localization:** The plugin automatically reads your active Obsidian language settings. Month names, weekday labels, and date formats will dynamically translate to your native language without any manual configuration.
 - **Security:** Board titles and markdown contents are sanitized using Obsidian's secure DOM API to prevent XSS vulnerabilities.
-- **Performance:** To handle large vaults and frequent clicks smoothly, the plugin uses LRU caching for file reads and debounces disk writes (300ms) to minimize I/O impact.
+- **Performance:** To handle large vaults and frequent clicks smoothly, the plugin caches file reads (with a bounded size) and debounces disk writes (300ms) to minimize I/O impact.
 
 ---
 
@@ -103,6 +105,10 @@ This plugin is available in the unofficial Obsidian community plugins browser an
 2. Create a folder in your vault at: `<your-vault>/.obsidian/plugins/streak-heatmap/`
 3. Place the three downloaded files into this folder.
 4. In Obsidian, go to **Settings → Community plugins**, refresh the installed plugins list, and enable **Streak Heatmap**.
+
+## Acknowledgments
+
+Thanks to [@FilipeSix](https://github.com/FilipeSix) for contributing to this release.
 
 ## 📄 License
 

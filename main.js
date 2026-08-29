@@ -405,6 +405,7 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
     }
 
     const badgeRegex = new RegExp(`✅\\s*${this.escapeRegExp(today)}(?=\\s|$)`);
+    const anyBadgeRegex = /\s*✅\s*\d{4}-\d{2}-\d{2}(?=\s|$)/;
     const pointsByKey = new Map();
     let changed = false;
 
@@ -418,20 +419,31 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
         const newline = data.includes('\r\n') ? '\r\n' : '\n';
         const updated = data.split(/\r?\n/).map((line) => {
           const rawTitle = this.taskContent(line, true);
-          if (!rawTitle || badgeRegex.test(rawTitle)) return line;
+          if (rawTitle) {
+            if (badgeRegex.test(rawTitle)) return line;
 
-          const remaining = prevUnchecked.get(rawTitle) || 0;
-          if (remaining <= 0) return line;
-          prevUnchecked.set(rawTitle, remaining - 1);
+            const remaining = prevUnchecked.get(rawTitle) || 0;
+            if (remaining <= 0) return line;
+            prevUnchecked.set(rawTitle, remaining - 1);
 
-          const normalizedTitle = rawTitle.toLowerCase();
-          const matches = compiledContexts.filter((ctx) => ctx.regex.test(normalizedTitle));
-          if (!matches.length) return line;
+            const normalizedTitle = rawTitle.toLowerCase();
+            const matches = compiledContexts.filter((ctx) => ctx.regex.test(normalizedTitle));
+            if (!matches.length) return line;
 
-          const matchedKeys = new Set(matches.map((ctx) => ctx.key));
-          matchedKeys.forEach((key) => pointsByKey.set(key, (pointsByKey.get(key) || 0) + 1));
-          changed = true;
-          return `${line} ✅ ${today}`;
+            const matchedKeys = new Set(matches.map((ctx) => ctx.key));
+            matchedKeys.forEach((key) => pointsByKey.set(key, (pointsByKey.get(key) || 0) + 1));
+            changed = true;
+            return `${line} ✅ ${today}`;
+          }
+
+          // Unchecked task still carrying a badge from before: strip it so the task is
+          // completable again. The point already awarded for that day is left untouched.
+          const uncheckedTitle = this.taskContent(line, false);
+          if (uncheckedTitle && anyBadgeRegex.test(line)) {
+            changed = true;
+            return line.replace(anyBadgeRegex, '');
+          }
+          return line;
         });
         return changed ? updated.join(newline) : data;
       });
@@ -1193,3 +1205,4 @@ module.exports = class StreakHeatmapPlugin extends Plugin {
     draw();
   }
 };
+/* nosourcemap */
