@@ -1,7 +1,5 @@
 .streak-heatmap-container {
   margin: 1em 0;
-  /* A full year is ~53 columns wide; this keeps it from breaking the note's
-     layout on narrow windows or mobile, letting it scroll horizontally instead. */
   overflow-x: auto;
   max-width: 100%;
   touch-action: manipulation;
@@ -25,17 +23,26 @@
 .streak-heatmap-year-btn {
   cursor: pointer;
   padding: 4px 12px;
+  min-height: 32px;
   border-radius: 6px;
   border: 1px solid var(--background-modifier-border);
   background: var(--background-secondary);
   color: var(--text-normal);
   touch-action: manipulation;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+@media (max-width: 480px) {
+  .streak-heatmap-year-btn {
+    min-height: 44px;
+    padding: 8px 16px;
+  }
 }
 
 .streak-heatmap-year-btn.is-active {
-  background: var(--interactive-accent);
-  color: var(--text-on-accent);
-  border-color: var(--interactive-accent);
+  background: var(--year-color, #39d353);
+  border-color: var(--year-color, #39d353);
+  color: var(--text-on-accent, #ffffff);
 }
 
 .streak-heatmap-year-btn:focus-visible,
@@ -69,10 +76,13 @@
   cursor: pointer;
   background-color: var(--background-modifier-border);
   touch-action: manipulation;
+  transition: background-color 150ms ease, outline 150ms ease;
+  will-change: background-color;
 }
 
-.streak-heatmap-cell.is-marked {
+.streak-heatmap-container:not(.is-detailed) .streak-heatmap-cell.is-marked {
   background-color: #39d353;
+  transition: background-color 150ms ease;
 }
 
 .streak-heatmap-cell.is-future {
@@ -111,4 +121,249 @@
   width: 0;
   background: #39d353;
   transition: width 180ms ease;
+}
+
+.streak-heatmap-legend-cell[data-level="1"] {
+  background-color: var(--cell-color);
+  opacity: 0.25;
+}
+
+.streak-heatmap-legend-cell[data-level="2"] {
+  background-color: var(--cell-color);
+  opacity: 0.5;
+}
+
+.streak-heatmap-legend-cell[data-level="3"] {
+  background-color: var(--cell-color);
+  opacity: 0.75;
+}
+
+.streak-heatmap-legend-cell[data-level="4"] {
+  background-color: var(--cell-color);
+  opacity: 1;
+}
+
+@supports (background: color-mix(in srgb, red 50%, transparent)) {
+  .streak-heatmap-container.is-detailed .streak-heatmap-cell:not(.is-future)[data-level="1"] {
+    background-color: color-mix(in srgb, var(--cell-color) 25%, transparent);
+    opacity: 1;
+  }
+
+  .streak-heatmap-container.is-detailed .streak-heatmap-cell:not(.is-future)[data-level="2"] {
+    background-color: color-mix(in srgb, var(--cell-color) 50%, transparent);
+    opacity: 1;
+  }
+
+  .streak-heatmap-container.is-detailed .streak-heatmap-cell:not(.is-future)[data-level="3"] {
+    background-color: color-mix(in srgb, var(--cell-color) 75%, transparent);
+    opacity: 1;
+  }
+
+  .streak-heatmap-container.is-detailed .streak-heatmap-cell:not(.is-future)[data-level="4"] {
+    background-color: var(--cell-color);
+  }
+}
+
+.streak-heatmap-popup {
+  position: fixed;
+  z-index: 9999;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  max-width: calc(100vw - 16px);
+  padding: 8px;
+  border: 1px solid var(--background-modifier-border);
+  border-radius: 8px;
+  background: var(--background-primary);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(4px);
+  will-change: transform;
+}
+
+@supports (background: color-mix(in srgb, red 50%, transparent)) {
+  .streak-heatmap-popup {
+    background: color-mix(in srgb, var(--background-primary) 85%, transparent);
+  }
+}
+
+@media (max-width: 480px) {
+  .streak-heatmap-popup {
+    backdrop-filter: blur(2px);
+    flex-direction: column;
+    gap: 8px;
+    width: 90vw;
+    max-width: none;
+  }
+}
+
+.streak-heatmap-popup input {
+  width: 3.5em;
+  min-height: 40px;
+  text-align: center;
+  appearance: none;
+  -moz-appearance: textfield;
+  transition: border-color 150ms ease;
+}
+
+@media (max-width: 480px) {
+  .streak-heatmap-popup input {
+    width: 100%;
+    min-height: 44px;
+    font-size: 16px;
+  }
+}
+
+.streak-heatmap-popup input::-webkit-inner-spin-button,
+.streak-heatmap-popup input::-webkit-outer-spin-button {
+  margin: 0;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.streak-heatmap-popup button {
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 8px;
+  line-height: 1;
+  user-select: none;
+  touch-action: manipulation;
+  transition: background-color 150ms ease, border-color 150ms ease;
+}
+
+@media (max-width: 480px) {
+  .streak-heatmap-popup button {
+    min-width: 100%;
+    min-height: 44px;
+    padding: 0 12px;
+  }
+}
+
+.streak-heatmap-popup button:focus-visible,
+.streak-heatmap-popup input:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: 1px;
+}
+
+.streak-heatmap-container.is-detailed .streak-heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 10px;
+  color: var(--text-muted);
+  font-size: 0.75em;
+}
+
+.streak-heatmap-container.is-detailed .streak-heatmap-legend-cell {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  background-color: var(--background-modifier-border);
+}
+
+.streak-heatmap-container.is-detailed .streak-heatmap-legend-cell[data-level="0"] {
+  background-color: var(--cell-color);
+  opacity: 0.1;
+}
+
+.streak-heatmap-container.is-detailed .streak-heatmap-legend-cell[data-level="1"] {
+  background-color: var(--cell-color);
+  opacity: 0.25;
+}
+
+.streak-heatmap-container.is-detailed .streak-heatmap-legend-cell[data-level="2"] {
+  background-color: var(--cell-color);
+  opacity: 0.5;
+}
+
+.streak-heatmap-container.is-detailed .streak-heatmap-legend-cell[data-level="3"] {
+  background-color: var(--cell-color);
+  opacity: 0.75;
+}
+
+.streak-heatmap-container.is-detailed .streak-heatmap-legend-cell[data-level="4"] {
+  background-color: var(--cell-color);
+  opacity: 1;
+}
+
+@supports (background: color-mix(in srgb, red 50%, transparent)) {
+  .streak-heatmap-container.is-detailed .streak-heatmap-legend-cell[data-level="1"] {
+    background-color: color-mix(in srgb, var(--cell-color) 25%, transparent);
+    opacity: 1;
+  }
+
+  .streak-heatmap-container.is-detailed .streak-heatmap-legend-cell[data-level="2"] {
+    background-color: color-mix(in srgb, var(--cell-color) 50%, transparent);
+    opacity: 1;
+  }
+
+  .streak-heatmap-container.is-detailed .streak-heatmap-legend-cell[data-level="3"] {
+    background-color: color-mix(in srgb, var(--cell-color) 75%, transparent);
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .streak-heatmap-stats-fill {
+    transition: none;
+  }
+  .streak-heatmap-cell {
+    transition: none;
+  }
+  .streak-heatmap-popup {
+    transition: none;
+  }
+}
+
+[dir="rtl"] .streak-heatmap-container {
+  direction: rtl;
+}
+
+[dir="rtl"] .streak-heatmap-daylabels {
+  margin-right: 0;
+  margin-left: 4px;
+}
+
+.streak-heatmap-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.streak-heatmap-cell:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+}
+
+.streak-heatmap-year-btn:focus-visible {
+  outline: 2px solid var(--interactive-accent);
+  outline-offset: -2px;
+}
+
+@media (max-width: 600px) {
+  .streak-heatmap-months {
+    font-size: 0.65em;
+  }
+  
+  .streak-heatmap-day-label {
+    font-size: 0.65em;
+  }
+  
+  .streak-heatmap-container::-webkit-scrollbar {
+    height: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .streak-heatmap-years {
+    flex-wrap: wrap;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) {
+  .streak-heatmap-popup input {
+    font-size: 16px;
+  }
+  
+  .streak-heatmap-popup button {
+    min-height: 48px;
+  }
 }

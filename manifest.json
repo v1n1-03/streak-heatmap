@@ -1,9 +1,9 @@
 {
   "id": "streak-heatmap",
   "name": "Streak Heatmap",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "minAppVersion": "0.15.0",
-  "description": "A clickable, GitHub-style streak heatmap. Click a day to mark or unmark it — no habit-tracking dependencies required.",
+  "description": "A clickable, GitHub-style streak heatmap for tracking daily habits.",
   "author": "v1n1-03",
   "authorUrl": "https://github.com/v1n1-03",
   "isDesktopOnly": false
